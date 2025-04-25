@@ -1,3 +1,3 @@
-module github.com/alognev/yupi
+module yupi
 
 go 1.24.2
