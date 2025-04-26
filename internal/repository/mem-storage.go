@@ -41,6 +41,20 @@ func (s *MemStorage) GetGauge(name string) (float64, bool) {
 	return val, ok
 }
 
+// GetAllGauges возвращает все gauge-метрики из хранилища
+func (s *MemStorage) GetAllGauges() map[string]float64 {
+	s.mu.RLock()         // Блокируем для чтения
+	defer s.mu.RUnlock() // Гарантируем разблокировку
+
+	// Создаем копию для безопасного доступа (так подсказал deepseek %))
+	gaugesCopy := make(map[string]float64, len(s.gauges))
+	for k, v := range s.gauges {
+		gaugesCopy[k] = v
+	}
+
+	return gaugesCopy
+}
+
 // GetCounter - получение значения counter
 func (s *MemStorage) GetCounter(name string) (int64, bool) {
 	s.mu.RLock()
