@@ -115,7 +115,6 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 			}
 		}
 
-		fmt.Println(count)
 		time.Sleep(a.reportInterval)
 	}
 }
