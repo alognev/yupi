@@ -87,7 +87,7 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		result := fmt.Sprintf("%f", value)
+		result := fmt.Sprintf("%v", value)
 		render.Status(r, http.StatusOK)
 		render.PlainText(w, r, result)
 	case "counter":
