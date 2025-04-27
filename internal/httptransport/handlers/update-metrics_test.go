@@ -84,9 +84,13 @@ func TestMetricServer_UpdateHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(tt.method, tt.path, nil)
-			w := httptest.NewRecorder()
 
-			server.UpdateHandler(w, req)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+
+			//w := httptest.NewRecorder()
+
+			//server.UpdateHandler(w, req)
 
 			if w.Code != tt.wantStatus {
 				t.Errorf("UpdateHandler() status = %v, want %v", w.Code, tt.wantStatus)
