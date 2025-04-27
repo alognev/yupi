@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,6 +12,12 @@ import (
 func TestMetricServer_UpdateHandler(t *testing.T) {
 	storage := repository.NewMemStorage()
 	server := NewMetricServer(storage)
+
+	// Инициализация роутера
+	r := chi.NewRouter()
+
+	// Настройка маршрутов
+	r.Post("/update/{type}/{name}/{value}", server.UpdateHandler)
 
 	tests := []struct {
 		name        string
