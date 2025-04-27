@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - iter1
+      - iter2
 
 jobs:
 
