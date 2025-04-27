@@ -19,8 +19,9 @@ func main() {
 	r := chi.NewRouter()
 
 	// Настройка маршрутов
-	r.Get("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
-	//http.HandleFunc("/update/", metricServer.UpdateHandler)
+	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
+	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
+	r.Get("/", metricServer.MainHandler)
 
 	// Запуск сервера
 	log.Println("Starting server on :8080")
