@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"yupi/internal/httptransport/handlers"
@@ -14,10 +15,14 @@ func main() {
 	// Инициализация сервера метрик
 	metricServer := handlers.NewMetricServer(storage)
 
+	// Инициализация роутера
+	r := chi.NewRouter()
+
 	// Настройка маршрутов
-	http.HandleFunc("/update/", metricServer.UpdateHandler)
+	r.Get("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
+	//http.HandleFunc("/update/", metricServer.UpdateHandler)
 
 	// Запуск сервера
 	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", r))
 }

@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,15 +28,15 @@ func (s *MetricServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Разбираем URL: /update/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>/<ЗНАЧЕНИЕ_МЕТРИКИ>
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 5 {
-		http.Error(w, "Invalid URL format", http.StatusNotFound)
+	metricType := chi.URLParam(r, "type")
+	metricName := chi.URLParam(r, "name")
+	metricValue := chi.URLParam(r, "value")
+
+	// Проверяем что username не пустой
+	if strings.TrimSpace(metricName) == "" || strings.ContainsAny(metricName, "!@#$%^&*") {
+		render.Status(r, http.StatusNotFound)
 		return
 	}
-
-	metricType := parts[2]
-	metricName := parts[3]
-	metricValue := parts[4]
 
 	switch metricType {
 	case "gauge":
@@ -55,4 +58,64 @@ func (s *MetricServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Invalid metric type", http.StatusBadRequest)
 	}
+}
+
+/*
+ * ValueHandler - обработчик информации о метрике
+ */
+func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Разбираем URL: /value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
+	metricType := chi.URLParam(r, "type")
+	metricName := chi.URLParam(r, "name")
+
+	// Проверяем что username не пустой
+	if strings.TrimSpace(metricName) == "" || strings.ContainsAny(metricName, "!@#$%^&*") {
+		render.Status(r, http.StatusNotFound)
+		return
+	}
+
+	switch metricType {
+	case "gauge":
+		value, exist := s.storage.GetGauge(metricName)
+		if !exist {
+			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+			return
+		}
+
+		result := fmt.Sprintf("%f", value)
+		render.Status(r, http.StatusOK)
+		render.PlainText(w, r, result)
+	case "counter":
+		value, exist := s.storage.GetCounter(metricName)
+		if !exist {
+			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+			return
+		}
+
+		result := fmt.Sprintf("%f", value)
+		render.Status(r, http.StatusOK)
+		render.PlainText(w, r, result)
+	default:
+		http.Error(w, "Invalid metric type", http.StatusBadRequest)
+	}
+}
+
+/*
+ * MainHandler - обработчик информации о всех метрик
+ */
+func (s *MetricServer) MainHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	values := s.storage.GetAllGauges()
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, values)
 }
