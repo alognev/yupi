@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
@@ -8,7 +9,13 @@ import (
 	"yupi/internal/repository"
 )
 
+type Config struct {
+	ServerAddr string
+}
+
 func main() {
+	// Инициализация конфига
+	config := setConfig()
 	// Инициализация хранилища
 	storage := repository.NewMemStorage()
 
@@ -24,6 +31,16 @@ func main() {
 	r.Get("/", metricServer.MainHandler)
 
 	// Запуск сервера
-	log.Println("Starting server on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Println("Starting server on " + config.ServerAddr)
+	log.Fatal(http.ListenAndServe(config.ServerAddr, r))
+}
+
+// выставляет значения конфигу из аргументов командной строки
+func setConfig() Config {
+	var config Config
+
+	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
+	flag.Parse()
+
+	return config
 }
