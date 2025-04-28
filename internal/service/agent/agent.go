@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 	"yupi/internal/repository"
@@ -19,6 +20,7 @@ const (
 )
 
 type Agent struct {
+	protocol       string
 	serverURL      string
 	pollInterval   time.Duration
 	reportInterval time.Duration
@@ -29,6 +31,7 @@ type Agent struct {
 func NewAgent(serverURL string, pollInterval time.Duration, reportInterval time.Duration) *Agent {
 
 	return &Agent{
+		protocol:       "http",
 		serverURL:      serverURL,
 		pollInterval:   pollInterval,
 		reportInterval: reportInterval,
@@ -122,6 +125,12 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 // Отправка метрики ан сервер
 func (a *Agent) sendMetric(metricType, metricName string, value interface{}) error {
 	url := fmt.Sprintf("%s/%s/%s/%s/%v", a.serverURL, UpdateURL, metricType, metricName, value)
+
+	// Добавляем http://, если URL не начинается с протокола, столкнулся с проблемой, что в тестах он добавляется, а в агенте нет из-за чего виснет запрос
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		url = a.protocol + "://" + url
+	}
+
 	resp, err := http.Post(url, "text/plain", bytes.NewBufferString(""))
 	if err != nil {
 		return err
