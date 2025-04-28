@@ -103,6 +103,8 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
+		// ждем время сбора метрик
+		time.Sleep(a.reportInterval)
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {
@@ -117,8 +119,6 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 				return
 			}
 		}
-
-		time.Sleep(a.reportInterval)
 	}
 }
 

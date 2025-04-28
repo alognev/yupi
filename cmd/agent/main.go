@@ -16,8 +16,8 @@ func main() {
 	config := setConfig()
 	agent := agent.NewAgent(
 		config.ServerAddr,
-		config.PollInterval*time.Second,
-		config.ReportInterval*time.Second,
+		config.PollInterval,
+		config.ReportInterval,
 	)
 	agent.Run()
 }
@@ -27,8 +27,14 @@ func setConfig() Config {
 	var config Config
 
 	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
-	flag.DurationVar(&config.PollInterval, "p", 2, "Интервал сбора метрик")
-	flag.DurationVar(&config.ReportInterval, "r", 10, "Интервал отправки метрик")
+	p := flag.Int64("p", 2, "Адрес сервера")
+	r := flag.Int64("r", 10, "Адрес сервера")
+	//flag.DurationVar(&config.PollInterval, "pp", 2, "Интервал сбора метрик")
+	//flag.DurationVar(&config.ReportInterval, "rr", 10, "Интервал отправки метрик")
+
+	config.PollInterval = time.Duration(*p) * time.Second
+	config.ReportInterval = time.Duration(*r) * time.Second
+
 	flag.Parse()
 
 	return config
