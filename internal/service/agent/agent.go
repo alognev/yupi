@@ -19,6 +19,7 @@ const (
 )
 
 type Agent struct {
+	protocol       string
 	serverURL      string
 	pollInterval   time.Duration
 	reportInterval time.Duration
@@ -26,9 +27,10 @@ type Agent struct {
 }
 
 // Конструктор
-func NewAgent(serverURL string, pollInterval, reportInterval time.Duration) *Agent {
+func NewAgent(serverURL string, pollInterval time.Duration, reportInterval time.Duration) *Agent {
 
 	return &Agent{
+		protocol:       "http",
 		serverURL:      serverURL,
 		pollInterval:   pollInterval,
 		reportInterval: reportInterval,
@@ -121,8 +123,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 
 // Отправка метрики ан сервер
 func (a *Agent) sendMetric(metricType, metricName string, value interface{}) error {
-	url := fmt.Sprintf("%s/%s/%s/%s/%v", a.serverURL, UpdateURL, metricType, metricName, value)
-
+	url := fmt.Sprintf("%s://%s/%s/%s/%s/%v", a.protocol, a.serverURL, UpdateURL, metricType, metricName, value)
 	resp, err := http.Post(url, "text/plain", bytes.NewBufferString(""))
 	if err != nil {
 		return err
