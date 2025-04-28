@@ -26,7 +26,7 @@ func main() {
 func setConfig() Config {
 	var config Config
 
-	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
+	flag.StringVar(&config.ServerAddr, "a", "http://localhost:8080", "Адрес сервера")
 	flag.DurationVar(&config.PollInterval, "p", 2, "Интервал сбора метрик")
 	flag.DurationVar(&config.ReportInterval, "r", 10, "Интервал отправки метрик")
 	flag.Parse()

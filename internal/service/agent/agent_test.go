@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewAgent(t *testing.T) {
-	serverURL := "http://localhost:8080"
+	serverURL := "localhost:8080"
 	pollInterval := 2 * time.Second
 	reportInterval := 10 * time.Second
 
@@ -44,7 +44,7 @@ func TestAgent_SendMetric(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
-
+	//t.Logf("%s", server.URL)
 	agent := NewAgent(server.URL, time.Second, time.Second)
 
 	tests := []struct {

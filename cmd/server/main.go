@@ -39,7 +39,7 @@ func main() {
 func setConfig() Config {
 	var config Config
 
-	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
+	flag.StringVar(&config.ServerAddr, "a", "http://localhost:8080", "Адрес сервера")
 	flag.Parse()
 
 	return config
