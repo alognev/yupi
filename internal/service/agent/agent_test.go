@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
+	"yupi/internal/config"
 )
 
 func TestNewAgent(t *testing.T) {
-	serverURL := "localhost:8080"
-	pollInterval := 2 * time.Second
-	reportInterval := 10 * time.Second
+	serverURL := config.DefaultServerAddr
+	pollInterval := config.DefaultPollInterval
+	reportInterval := config.DefaultReportInterval
 
 	agent := NewAgent(serverURL, pollInterval, reportInterval)
 
@@ -44,8 +44,8 @@ func TestAgent_SendMetric(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
-	//t.Logf("%s", server.URL)
-	agent := NewAgent(server.URL, time.Second, time.Second)
+
+	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval)
 
 	tests := []struct {
 		name       string
@@ -89,7 +89,7 @@ func TestAgent_ReportMetrics(t *testing.T) {
 	}))
 	defer server.Close()
 
-	agent := NewAgent(server.URL, 2*time.Second, 10*time.Second)
+	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval)
 
 	// Добавляем тестовые метрики
 	agent.storage.UpdateGauge("test_gauge1", 1.0)

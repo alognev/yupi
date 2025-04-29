@@ -22,13 +22,13 @@ const (
 type Agent struct {
 	protocol       string
 	serverURL      string
-	pollInterval   time.Duration
-	reportInterval time.Duration
+	pollInterval   int64
+	reportInterval int64
 	storage        *repository.MemStorage
 }
 
 // Конструктор
-func NewAgent(serverURL string, pollInterval time.Duration, reportInterval time.Duration) *Agent {
+func NewAgent(serverURL string, pollInterval int64, reportInterval int64) *Agent {
 
 	return &Agent{
 		protocol:       "http",
@@ -95,7 +95,7 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 		}
 
 		a.storage.UpdateCounter("PollCount", 1)
-		time.Sleep(a.pollInterval)
+		time.Sleep(time.Duration(a.pollInterval) * time.Second)
 	}
 }
 
@@ -104,7 +104,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		// ждем время сбора метрик
-		time.Sleep(a.reportInterval)
+		time.Sleep(time.Duration(a.reportInterval) * time.Second)
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {

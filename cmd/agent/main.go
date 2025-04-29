@@ -2,40 +2,54 @@ package main
 
 import (
 	"flag"
-	"time"
+	"github.com/caarlos0/env/v6"
+	"log"
+	"strings"
+	"yupi/internal/config"
 	"yupi/internal/service/agent"
 )
 
 type Config struct {
-	ServerAddr     string
-	PollInterval   time.Duration
-	ReportInterval time.Duration
+	ServerAddr     string `env:"ADDRESS"`
+	PollInterval   int64  `env:"POLL_INTERVAL"`
+	ReportInterval int64  `env:"REPORT_INTERVAL"`
 }
 
 func main() {
-	config := setConfig()
+	cfg := setConfig()
 	agent := agent.NewAgent(
-		config.ServerAddr,
-		config.PollInterval,
-		config.ReportInterval,
+		cfg.ServerAddr,
+		cfg.PollInterval,
+		cfg.ReportInterval,
 	)
 	agent.Run()
 }
 
 // выставляет значения конфигу из аргументов командной строки
 func setConfig() Config {
-	var config Config
+	var cfg Config
 
-	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
-	p := flag.Int64("p", 2, "Адрес сервера")
-	r := flag.Int64("r", 10, "Адрес сервера")
-	//flag.DurationVar(&config.PollInterval, "pp", 2, "Интервал сбора метрик")
-	//flag.DurationVar(&config.ReportInterval, "rr", 10, "Интервал отправки метрик")
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	config.PollInterval = time.Duration(*p) * time.Second
-	config.ReportInterval = time.Duration(*r) * time.Second
+	a := flag.String("a", config.DefaultServerAddr, "Адрес сервера")
+	p := flag.Int64("p", config.DefaultPollInterval, "Интервал сбора метрик")
+	r := flag.Int64("r", config.DefaultReportInterval, "Интервал отправки метрик")
+
+	if strings.TrimSpace(cfg.ServerAddr) == "" {
+		cfg.ServerAddr = *a
+	}
+
+	if cfg.PollInterval == 0 {
+		cfg.PollInterval = *p
+	}
+
+	if cfg.ReportInterval == 0 {
+		cfg.ReportInterval = *r
+	}
 
 	flag.Parse()
-
-	return config
+	return cfg
 }

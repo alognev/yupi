@@ -2,15 +2,18 @@ package main
 
 import (
 	"flag"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
+	"strings"
+	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
 	"yupi/internal/repository"
 )
 
 type Config struct {
-	ServerAddr string
+	ServerAddr string `env:"ADDRESS"`
 }
 
 func main() {
@@ -37,10 +40,17 @@ func main() {
 
 // выставляет значения конфигу из аргументов командной строки
 func setConfig() Config {
-	var config Config
+	var cfg Config
 
-	flag.StringVar(&config.ServerAddr, "a", "localhost:8080", "Адрес сервера")
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if strings.TrimSpace(cfg.ServerAddr) == "" {
+		flag.StringVar(&cfg.ServerAddr, "a", config.DefaultServerAddr, "Адрес сервера")
+	}
+
 	flag.Parse()
-
-	return config
+	return cfg
 }
