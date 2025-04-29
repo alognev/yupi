@@ -11,11 +11,11 @@ func TestNewMemStorage(t *testing.T) {
 		t.Error("Не удалось инициализировать хранилище")
 	}
 
-	if storage.gauges == nil {
+	if storage == nil || storage.gauges == nil {
 		t.Error("Не удалось инициализировать хранилищи метрик с типом gauges")
 	}
 
-	if storage.counters == nil {
+	if storage == nil || storage.counters == nil {
 		t.Error("Не удалось инициализировать хранилищи метрик с типом counters")
 	}
 }
