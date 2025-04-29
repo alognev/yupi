@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"github.com/caarlos0/env/v6"
+	"github.com/caarlos0/env/v11"
 	"log"
 	"strings"
 	"yupi/internal/config"
