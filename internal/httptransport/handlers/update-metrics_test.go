@@ -120,7 +120,7 @@ func TestNewMetricServer(t *testing.T) {
 		t.Error("Не удалось инициализировать сервер метрик")
 	}
 
-	if server.storage != storage {
+	if server != nil && server.storage != storage {
 		t.Error("Хранилище сервиса метрик имеет другой тип")
 	}
 }

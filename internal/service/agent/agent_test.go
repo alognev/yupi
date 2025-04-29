@@ -18,19 +18,19 @@ func TestNewAgent(t *testing.T) {
 		t.Error("Не удалось инициировать агента")
 	}
 
-	if agent.serverURL != serverURL {
+	if agent != nil && agent.serverURL != serverURL {
 		t.Errorf("serverURL %v, ожидали %v", agent.serverURL, serverURL)
 	}
 
-	if agent.pollInterval != pollInterval {
+	if agent != nil && agent.pollInterval != pollInterval {
 		t.Errorf("Интервал обновления метрик %v, ожидали %v", agent.pollInterval, pollInterval)
 	}
 
-	if agent.reportInterval != reportInterval {
+	if agent != nil && agent.reportInterval != reportInterval {
 		t.Errorf("Интервал отправки метрик %v, ожидали %v", agent.reportInterval, reportInterval)
 	}
 
-	if agent.storage == nil {
+	if agent != nil && agent.storage == nil {
 		t.Error("Не удалось инициализировать хранилище")
 	}
 }
