@@ -3,6 +3,7 @@ package agent
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"runtime"
@@ -95,6 +96,8 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 		}
 
 		a.storage.UpdateCounter("PollCount", 1)
+		//log.Println(a.pollInterval)
+		log.Println(time.Duration(a.pollInterval) * time.Second)
 		time.Sleep(time.Duration(a.pollInterval) * time.Second)
 	}
 }
@@ -105,6 +108,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
 	for {
 		// ждем время сбора метрик
 		time.Sleep(time.Duration(a.reportInterval) * time.Second)
+		log.Println(time.Duration(a.reportInterval) * time.Second)
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {
@@ -130,7 +134,7 @@ func (a *Agent) sendMetric(metricType, metricName string, value interface{}) err
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 		url = a.protocol + "://" + url
 	}
-
+	log.Println(url)
 	resp, err := http.Post(url, "text/plain", bytes.NewBufferString(""))
 	if err != nil {
 		return err

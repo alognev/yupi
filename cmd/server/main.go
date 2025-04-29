@@ -48,10 +48,11 @@ func setConfig() Config {
 	}
 
 	a := flag.String("a", config.DefaultServerAddr, "Адрес сервера")
+	flag.Parse()
+
 	if strings.TrimSpace(cfg.ServerAddr) == "" {
 		cfg.ServerAddr = *a
 	}
 
-	flag.Parse()
 	return cfg
 }

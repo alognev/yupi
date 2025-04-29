@@ -17,12 +17,12 @@ type Config struct {
 
 func main() {
 	cfg := setConfig()
-	agent := agent.NewAgent(
+	myAgent := agent.NewAgent(
 		cfg.ServerAddr,
 		cfg.PollInterval,
 		cfg.ReportInterval,
 	)
-	agent.Run()
+	myAgent.Run()
 }
 
 // выставляет значения конфигу из аргументов командной строки
@@ -37,6 +37,7 @@ func setConfig() Config {
 	a := flag.String("a", config.DefaultServerAddr, "Адрес сервера")
 	p := flag.Int64("p", config.DefaultPollInterval, "Интервал сбора метрик")
 	r := flag.Int64("r", config.DefaultReportInterval, "Интервал отправки метрик")
+	flag.Parse()
 
 	if strings.TrimSpace(cfg.ServerAddr) == "" {
 		cfg.ServerAddr = *a
@@ -50,6 +51,5 @@ func setConfig() Config {
 		cfg.ReportInterval = *r
 	}
 
-	flag.Parse()
 	return cfg
 }
