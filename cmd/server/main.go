@@ -18,7 +18,7 @@ type Config struct {
 
 func main() {
 	// Инициализация конфига
-	config := setConfig()
+	cfg := setConfig()
 	// Инициализация хранилища
 	storage := repository.NewMemStorage()
 
@@ -34,8 +34,8 @@ func main() {
 	r.Get("/", metricServer.MainHandler)
 
 	// Запуск сервера
-	log.Println("Starting server on " + config.ServerAddr)
-	log.Fatal(http.ListenAndServe(config.ServerAddr, r))
+	log.Println("Starting server on " + cfg.ServerAddr)
+	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }
 
 // выставляет значения конфигу из аргументов командной строки
@@ -47,8 +47,9 @@ func setConfig() Config {
 		log.Fatal(err)
 	}
 
+	a := flag.String("a", config.DefaultServerAddr, "Адрес сервера")
 	if strings.TrimSpace(cfg.ServerAddr) == "" {
-		flag.StringVar(&cfg.ServerAddr, "a", config.DefaultServerAddr, "Адрес сервера")
+		cfg.ServerAddr = *a
 	}
 
 	flag.Parse()
