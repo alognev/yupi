@@ -58,12 +58,12 @@ func TestMemStorage_UpdateCounter(t *testing.T) {
 		expected int64
 	}{
 		{
-			name:     "Успешная запись одного значения",
+			name:     "Успешная_запись_одного_значения",
 			values:   []int64{5},
 			expected: 5,
 		},
 		{
-			name:     "Успешная запись нескольких значений",
+			name:     "Успешная_запись_нескольких_значений",
 			values:   []int64{1, 2, 3},
 			expected: 6,
 		},

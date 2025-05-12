@@ -55,14 +55,14 @@ func TestAgent_SendMetric(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:       "Успешное обновление метрики с типом gauge",
+			name:       "Успешное_обновление_метрики_с_типом_gauge",
 			metricType: TypeGauge,
 			metricName: "test_gauge",
 			value:      42.0,
 			wantErr:    false,
 		},
 		{
-			name:       "Успешное обновление метрики с типом counters",
+			name:       "Успешное_обновление_метрики_с_типом_counters",
 			metricType: TypeCounter,
 			metricName: "test_counter",
 			value:      int64(10),

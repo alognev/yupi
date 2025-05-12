@@ -54,12 +54,10 @@ func (a *Agent) Run() {
 // Агрегирование метрик
 func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 	defer wg.Done()
-
 	var stats runtime.MemStats
-	runtime.ReadMemStats(&stats)
 
 	for {
-
+		runtime.ReadMemStats(&stats)
 		metrics := map[string]interface{}{
 			"Alloc":         float64(stats.Alloc),
 			"BuckHashSys":   float64(stats.BuckHashSys),
@@ -96,31 +94,30 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 		}
 
 		a.storage.UpdateCounter("PollCount", 1)
-		//log.Println(a.pollInterval)
-		log.Println(time.Duration(a.pollInterval) * time.Second)
 		time.Sleep(time.Duration(a.pollInterval) * time.Second)
 	}
 }
 
 // Отправка всех метрик на сервер
-func (a *Agent) reportMetrics(wg *sync.WaitGroup) {
+func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 	defer wg.Done()
 	for {
 		// ждем время сбора метрик
 		time.Sleep(time.Duration(a.reportInterval) * time.Second)
-		log.Println(time.Duration(a.reportInterval) * time.Second)
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {
 			if err := a.sendMetric(TypeCounter, MetricCount, count); err != nil {
-				return
+				log.Println(err)
+				return err
 			}
 		}
 
 		// Отправляем все gauge метрики
 		for name, value := range a.storage.GetAllGauges() {
 			if err := a.sendMetric(TypeGauge, name, value); err != nil {
-				return
+				log.Println(err)
+				return err
 			}
 		}
 	}

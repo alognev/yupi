@@ -29,7 +29,7 @@ func TestMetricServer_UpdateHandler(t *testing.T) {
 		checkMetric bool
 	}{
 		{
-			name:        "Успешное обновление метрики с типом gauge и значением с вещественным числом",
+			name:        "Успешное_обновление_метрики_с_типом_gauge_и_значением_с_вещественным_числом",
 			method:      http.MethodPost,
 			path:        "/update/gauge/test_gauge/42.0",
 			wantStatus:  http.StatusOK,
@@ -37,7 +37,7 @@ func TestMetricServer_UpdateHandler(t *testing.T) {
 			checkMetric: true,
 		},
 		{
-			name:        "Успешное обновление метрики с типом counters и значением с целым числом",
+			name:        "Успешное_обновление_метрики_с_типом_counters_и_значением_с_целым_числом",
 			method:      http.MethodPost,
 			path:        "/update/counter/test_counter/10",
 			wantStatus:  http.StatusOK,
@@ -45,35 +45,35 @@ func TestMetricServer_UpdateHandler(t *testing.T) {
 			checkMetric: true,
 		},
 		{
-			name:        "Некорректный тип запроса",
+			name:        "Некорректный_тип_запроса",
 			method:      http.MethodGet,
 			path:        "/update/gauge/test/42.0",
 			wantStatus:  http.StatusMethodNotAllowed,
 			checkMetric: false,
 		},
 		{
-			name:        "Некорректный формат URL",
+			name:        "Некорректный_формат_URL",
 			method:      http.MethodPost,
 			path:        "/update/gauge",
 			wantStatus:  http.StatusNotFound,
 			checkMetric: false,
 		},
 		{
-			name:        "Некорректное значение метрики с типом gauge",
+			name:        "Некорректное_значение_метрики_с_типом_gauge",
 			method:      http.MethodPost,
 			path:        "/update/gauge/test/invalid",
 			wantStatus:  http.StatusBadRequest,
 			checkMetric: false,
 		},
 		{
-			name:        "Некорректное значение метрики с типом counter",
+			name:        "Некорректное_значение_метрики_с_типом_counter",
 			method:      http.MethodPost,
 			path:        "/update/counter/test/invalid",
 			wantStatus:  http.StatusBadRequest,
 			checkMetric: false,
 		},
 		{
-			name:        "Некорректное тип метрики",
+			name:        "Некорректное_тип_метрики",
 			method:      http.MethodPost,
 			path:        "/update/invalid/test/42",
 			wantStatus:  http.StatusBadRequest,
