@@ -9,6 +9,7 @@ import (
 	"strings"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
+	"yupi/internal/logger"
 	"yupi/internal/repository"
 )
 
@@ -17,6 +18,9 @@ type Config struct {
 }
 
 func main() {
+	if err := logger.Initialize("info"); err != nil {
+		log.Fatal("Не удалось инициировать логер")
+	}
 	// Инициализация конфига
 	cfg := setConfig()
 	// Инициализация хранилища
@@ -27,7 +31,7 @@ func main() {
 
 	// Инициализация роутера
 	r := chi.NewRouter()
-
+	r.Use(logger.LoggingRequestMiddleware)
 	// Настройка маршрутов
 	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
 	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
