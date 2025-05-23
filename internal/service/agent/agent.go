@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	. "yupi/internal/domain/metrics"
 	"yupi/internal/repository"
 )
 
@@ -107,7 +109,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {
-			if err := a.sendMetric(TypeCounter, MetricCount, count); err != nil {
+			if err := a.sendMetricJson(TypeCounter, MetricCount, count); err != nil {
 				log.Println(err)
 				return err
 			}
@@ -115,7 +117,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 
 		// Отправляем все gauge метрики
 		for name, value := range a.storage.GetAllGauges() {
-			if err := a.sendMetric(TypeGauge, name, value); err != nil {
+			if err := a.sendMetricJson(TypeGauge, name, value); err != nil {
 				log.Println(err)
 				return err
 			}
@@ -123,7 +125,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 	}
 }
 
-// Отправка метрики ан сервер
+// Отправка метрики на сервер
 func (a *Agent) sendMetric(metricType, metricName string, value interface{}) error {
 	url := fmt.Sprintf("%s/%s/%s/%s/%v", a.serverURL, UpdateURL, metricType, metricName, value)
 
@@ -135,6 +137,58 @@ func (a *Agent) sendMetric(metricType, metricName string, value interface{}) err
 	resp, err := http.Post(url, "text/plain", bytes.NewBufferString(""))
 	if err != nil {
 		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned status: %d", resp.StatusCode)
+	}
+	return nil
+}
+
+// Отправка метрики на сервер в формате JSON
+func (a *Agent) sendMetricJson(metricType, metricName string, value interface{}) error {
+	url := fmt.Sprintf("%s/update/", a.serverURL)
+
+	// Добавляем http://, если URL не начинается с протокола
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		url = a.protocol + "://" + url
+	}
+
+	// Создаем структуру метрики
+	metric := Metrics{
+		ID:    metricName,
+		MType: metricType,
+	}
+
+	// Заполняем значение в зависимости от типа метрики
+	switch metricType {
+	case TypeGauge:
+		if val, ok := value.(float64); ok {
+			metric.Value = &val
+		} else {
+			return fmt.Errorf("invalid gauge value type: %T", value)
+		}
+	case TypeCounter:
+		if val, ok := value.(int64); ok {
+			metric.Delta = &val
+		} else {
+			return fmt.Errorf("invalid counter value type: %T", value)
+		}
+	default:
+		return fmt.Errorf("invalid metric type: %s", metricType)
+	}
+
+	// Сериализуем метрику в JSON
+	jsonData, err := json.Marshal(metric)
+	if err != nil {
+		return fmt.Errorf("failed to marshal metric: %w", err)
+	}
+
+	// Отправляем запрос
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
 	}
 	defer resp.Body.Close()
 
