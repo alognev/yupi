@@ -109,7 +109,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 		// Отправляем PollCount
 		count, exists := a.storage.GetCounter(MetricCount)
 		if exists {
-			if err := a.sendMetricJson(TypeCounter, MetricCount, count); err != nil {
+			if err := a.sendMetricJSON(TypeCounter, MetricCount, count); err != nil {
 				log.Println(err)
 				return err
 			}
@@ -117,7 +117,7 @@ func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
 
 		// Отправляем все gauge метрики
 		for name, value := range a.storage.GetAllGauges() {
-			if err := a.sendMetricJson(TypeGauge, name, value); err != nil {
+			if err := a.sendMetricJSON(TypeGauge, name, value); err != nil {
 				log.Println(err)
 				return err
 			}
@@ -147,7 +147,7 @@ func (a *Agent) sendMetric(metricType, metricName string, value interface{}) err
 }
 
 // Отправка метрики на сервер в формате JSON
-func (a *Agent) sendMetricJson(metricType, metricName string, value interface{}) error {
+func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{}) error {
 	url := fmt.Sprintf("%s/update/", a.serverURL)
 
 	// Добавляем http://, если URL не начинается с протокола
