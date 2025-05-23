@@ -22,7 +22,7 @@ func NewMetricServer(storage *repository.MemStorage) *MetricServer {
 	return &MetricServer{storage: storage}
 }
 
-func (s *MetricServer) JsonUpdateHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	var m Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
@@ -128,7 +128,7 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *MetricServer) JsonValueHandler(w http.ResponseWriter, r *http.Request) {
+func (s *MetricServer) JSONValueHandler(w http.ResponseWriter, r *http.Request) {
 	var m Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)

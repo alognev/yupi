@@ -126,7 +126,7 @@ func TestNewMetricServer(t *testing.T) {
 	}
 }
 
-func TestMetricServer_JsonUpdateHandler(t *testing.T) {
+func TestMetricServer_JSONUpdateHandler(t *testing.T) {
 	storage := repository.NewMemStorage()
 	server := NewMetricServer(storage)
 
@@ -171,20 +171,20 @@ func TestMetricServer_JsonUpdateHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/update", strings.NewReader(tt.requestBody))
 			w := httptest.NewRecorder()
 
-			server.JsonUpdateHandler(w, req)
+			server.JSONUpdateHandler(w, req)
 
 			if w.Code != tt.wantStatus {
-				t.Errorf("JsonUpdateHandler() status = %v, want %v", w.Code, tt.wantStatus)
+				t.Errorf("JSONUpdateHandler() status = %v, want %v", w.Code, tt.wantStatus)
 			}
 
 			if tt.checkMetric {
 				if strings.Contains(tt.requestBody, "gauge") {
 					if value, exists := storage.GetGauge("test_gauge"); !exists || value != tt.wantGaugeValue {
-						t.Errorf("JsonUpdateHandler() gauge = %v, want %v", value, tt.wantGaugeValue)
+						t.Errorf("JSONUpdateHandler() gauge = %v, want %v", value, tt.wantGaugeValue)
 					}
 				} else if strings.Contains(tt.requestBody, "counter") {
 					if value, exists := storage.GetCounter("test_counter"); !exists || value != tt.wantCounterValue {
-						t.Errorf("JsonUpdateHandler() counter = %v, want %v", value, tt.wantCounterValue)
+						t.Errorf("JSONUpdateHandler() counter = %v, want %v", value, tt.wantCounterValue)
 					}
 				}
 			}
@@ -192,19 +192,19 @@ func TestMetricServer_JsonUpdateHandler(t *testing.T) {
 	}
 }
 
-func TestMetricServer_JsonValueHandler(t *testing.T) {
+func TestMetricServer_JSONValueHandler(t *testing.T) {
 	storage := repository.NewMemStorage()
 	server := NewMetricServer(storage)
 
 	reqBody := `{"id":"test_gauge","type":"gauge","value":42.5}`
 	req := httptest.NewRequest(http.MethodPost, "/update", strings.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	server.JsonUpdateHandler(w, req)
+	server.JSONUpdateHandler(w, req)
 
 	req2Body := `{"id":"test_counter","type":"counter","delta":10}`
 	req2 := httptest.NewRequest(http.MethodPost, "/update", strings.NewReader(req2Body))
 	w2 := httptest.NewRecorder()
-	server.JsonUpdateHandler(w2, req2)
+	server.JSONUpdateHandler(w2, req2)
 
 	tests := []struct {
 		name        string
@@ -249,16 +249,16 @@ func TestMetricServer_JsonValueHandler(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/value", strings.NewReader(tt.requestBody))
 			w := httptest.NewRecorder()
 
-			server.JsonValueHandler(w, req)
+			server.JSONValueHandler(w, req)
 
 			if w.Code != tt.wantStatus {
-				t.Errorf("JsonValueHandler() status = %v, want %v", w.Code, tt.wantStatus)
+				t.Errorf("JSONValueHandler() status = %v, want %v", w.Code, tt.wantStatus)
 			}
 
 			// Проверяем тело ответа
 			gotBody := strings.TrimSpace(w.Body.String())
 			if gotBody != tt.wantBody {
-				t.Errorf("JsonValueHandler() body = %v, want %v", gotBody, tt.wantBody)
+				t.Errorf("JSONValueHandler() body = %v, want %v", gotBody, tt.wantBody)
 			}
 		})
 	}

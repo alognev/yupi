@@ -37,10 +37,10 @@ func main() {
 	// Настройка маршрутов
 
 	r.With(middleware.AllowContentType("application/json")).
-		Post("/update/", metricServer.JsonUpdateHandler)
+		Post("/update/", metricServer.JSONUpdateHandler)
 
 	r.With(middleware.AllowContentType("application/json")).
-		Post("/value/", metricServer.JsonValueHandler)
+		Post("/value/", metricServer.JSONValueHandler)
 
 	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
 	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
