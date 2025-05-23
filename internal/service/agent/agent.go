@@ -159,19 +159,21 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	metric := metrics.Metrics{
 		ID:    metricName,
 		MType: metricType,
+		Value: new(float64),
+		Delta: new(int64),
 	}
 
 	// Заполняем значение в зависимости от типа метрики
 	switch metricType {
 	case TypeGauge:
 		if val, ok := value.(float64); ok {
-			metric.Value = &val
+			*metric.Value = val
 		} else {
 			return fmt.Errorf("invalid gauge value type: %T", value)
 		}
 	case TypeCounter:
 		if val, ok := value.(int64); ok {
-			metric.Delta = &val
+			*metric.Delta = val
 		} else {
 			return fmt.Errorf("invalid counter value type: %T", value)
 		}
@@ -181,6 +183,7 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 
 	// Сериализуем метрику в JSON
 	jsonData, err := json.Marshal(metric)
+
 	if err != nil {
 		return fmt.Errorf("failed to marshal metric: %w", err)
 	}
