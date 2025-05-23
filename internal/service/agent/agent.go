@@ -167,13 +167,13 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	switch metricType {
 	case TypeGauge:
 		if val, ok := value.(float64); ok {
-			*metric.Value = val
+			metric.Value = &val
 		} else {
 			return fmt.Errorf("invalid gauge value type: %T", value)
 		}
 	case TypeCounter:
 		if val, ok := value.(int64); ok {
-			*metric.Delta = val
+			metric.Delta = &val
 		} else {
 			return fmt.Errorf("invalid counter value type: %T", value)
 		}
