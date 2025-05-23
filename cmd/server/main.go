@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
 	"strings"
@@ -32,7 +33,15 @@ func main() {
 	// Инициализация роутера
 	r := chi.NewRouter()
 	r.Use(logger.LoggingRequestMiddleware)
+
 	// Настройка маршрутов
+
+	r.With(middleware.AllowContentType("application/json")).
+		Post("/update/", metricServer.JsonUpdateHandler)
+
+	r.With(middleware.AllowContentType("application/json")).
+		Post("/value/", metricServer.JsonValueHandler)
+
 	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
 	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
 	r.Get("/", metricServer.MainHandler)

@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"net/http"
 	"strconv"
 	"strings"
+	. "yupi/internal/domain/metrics"
 	"yupi/internal/repository"
 )
 
@@ -18,6 +20,26 @@ type MetricServer struct {
 // NewMetricServer - конструктор сервера метрик
 func NewMetricServer(storage *repository.MemStorage) *MetricServer {
 	return &MetricServer{storage: storage}
+}
+
+func (s *MetricServer) JsonUpdateHandler(w http.ResponseWriter, r *http.Request) {
+	var m Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
+		return
+	}
+
+	switch m.MType {
+	case "gauge":
+		s.storage.UpdateGaugeV2(&m)
+	case "counter":
+		s.storage.UpdateCounterV2(&m)
+	default:
+		http.Error(w, "Invalid metric type", http.StatusBadRequest)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value})
 }
 
 // UpdateHandler - обработчик обновления метрик
@@ -105,6 +127,38 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (s *MetricServer) JsonValueHandler(w http.ResponseWriter, r *http.Request) {
+	var m Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
+		return
+	}
+
+	switch m.MType {
+	case "gauge":
+		value, exist := s.storage.GetGauge(m.ID)
+		if !exist {
+			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+			return
+		}
+		m.Value = new(float64)
+		*m.Value = value
+	case "counter":
+		delta, exist := s.storage.GetCounter(m.ID)
+		if !exist {
+			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+			return
+		}
+		m.Delta = new(int64)
+		*m.Delta = delta
+	default:
+		http.Error(w, "Invalid metric type", http.StatusBadRequest)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value})
+}
+
 /*
  * MainHandler - обработчик информации о всех метрик
  */
@@ -118,4 +172,11 @@ func (s *MetricServer) MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, values)
+}
+
+func respondJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+	}
 }
