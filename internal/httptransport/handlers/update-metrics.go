@@ -35,11 +35,12 @@ func (s *MetricServer) JsonUpdateHandler(w http.ResponseWriter, r *http.Request)
 	case "counter":
 		s.storage.UpdateCounterV2(&m)
 	default:
-		http.Error(w, "Invalid metric type", http.StatusBadRequest)
+		http.Error(w, `{"error":"Invalid metric type"}`, http.StatusBadRequest)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value})
+	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
 // UpdateHandler - обработчик обновления метрик
@@ -138,7 +139,7 @@ func (s *MetricServer) JsonValueHandler(w http.ResponseWriter, r *http.Request) 
 	case "gauge":
 		value, exist := s.storage.GetGauge(m.ID)
 		if !exist {
-			http.Error(w, "Метрика не найдена", http.StatusNotFound)
+			http.Error(w, `{"error":"Метрика не найдена"}`, http.StatusNotFound)
 			return
 		}
 		m.Value = new(float64)
@@ -152,11 +153,12 @@ func (s *MetricServer) JsonValueHandler(w http.ResponseWriter, r *http.Request) 
 		m.Delta = new(int64)
 		*m.Delta = delta
 	default:
-		http.Error(w, "Invalid metric type", http.StatusBadRequest)
+		http.Error(w, `{"error":"Invalid metric type"}`, http.StatusBadRequest)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value})
+	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
 /*
