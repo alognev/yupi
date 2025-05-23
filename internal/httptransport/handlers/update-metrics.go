@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	. "yupi/internal/domain/metrics"
+	"yupi/internal/domain/metrics"
 	"yupi/internal/repository"
 )
 
@@ -23,7 +23,7 @@ func NewMetricServer(storage *repository.MemStorage) *MetricServer {
 }
 
 func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	var m Metrics
+	var m metrics.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
 		return
@@ -40,7 +40,7 @@ func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
+	respondJSON(w, metrics.Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
 // UpdateHandler - обработчик обновления метрик
@@ -129,7 +129,7 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *MetricServer) JSONValueHandler(w http.ResponseWriter, r *http.Request) {
-	var m Metrics
+	var m metrics.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
 		return
@@ -158,7 +158,7 @@ func (s *MetricServer) JSONValueHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.WriteHeader(http.StatusOK)
-	respondJSON(w, Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
+	respondJSON(w, metrics.Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
 /*

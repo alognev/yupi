@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	. "yupi/internal/domain/metrics"
+	"yupi/internal/domain/metrics"
 	"yupi/internal/repository"
 )
 
@@ -60,7 +60,7 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 
 	for {
 		runtime.ReadMemStats(&stats)
-		metrics := map[string]interface{}{
+		metricList := map[string]interface{}{
 			"Alloc":         float64(stats.Alloc),
 			"BuckHashSys":   float64(stats.BuckHashSys),
 			"Frees":         float64(stats.Frees),
@@ -91,7 +91,7 @@ func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
 			"RandomValue":   rand.Float64(),
 		}
 
-		for k, v := range metrics {
+		for k, v := range metricList {
 			a.storage.UpdateGauge(k, v.(float64))
 		}
 
@@ -156,7 +156,7 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	}
 
 	// Создаем структуру метрики
-	metric := Metrics{
+	metric := metrics.Metrics{
 		ID:    metricName,
 		MType: metricType,
 	}

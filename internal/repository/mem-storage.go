@@ -2,7 +2,7 @@ package repository
 
 import (
 	"sync"
-	. "yupi/internal/domain/metrics"
+	"yupi/internal/domain/metrics"
 )
 
 // MemStorage - хранилище метрик в памяти
@@ -27,14 +27,14 @@ func (s *MemStorage) UpdateGauge(name string, value float64) {
 	s.gauges[name] = value
 }
 
-func (s *MemStorage) UpdateGaugeV2(m *Metrics) {
+func (s *MemStorage) UpdateGaugeV2(m *metrics.Metrics) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.gauges[m.ID] = *m.Value
 }
 
 // UpdateCounter - обновление метрики типа counter
-func (s *MemStorage) UpdateCounterV2(m *Metrics) {
+func (s *MemStorage) UpdateCounterV2(m *metrics.Metrics) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.counters[m.ID] += *m.Delta
