@@ -1,8 +1,10 @@
 package logger
 
 import (
+	"bytes"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
+	"io"
 	"net/http"
 	"time"
 )
@@ -37,7 +39,8 @@ func Initialize(level string) error {
 func LoggingRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-
+		body, _ := io.ReadAll(r.Body)
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
 		// Обертка для получения статуса ответа
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
@@ -49,6 +52,7 @@ func LoggingRequestMiddleware(next http.Handler) http.Handler {
 		Log.Info("got incoming HTTP request",
 			zap.String("method", r.Method),
 			zap.String("URI", r.URL.Path),
+			zap.String("body", string(body)),
 			zap.Duration("duration", duration.Round(time.Millisecond)),
 			zap.Int("status", ww.Status()),
 			zap.Int("bytes", ww.BytesWritten()),
