@@ -39,7 +39,6 @@ func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	respondJSON(w, metrics.Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
@@ -157,7 +156,6 @@ func (s *MetricServer) JSONValueHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	respondJSON(w, metrics.Metrics{ID: m.ID, MType: m.MType, Value: m.Value, Delta: m.Delta})
 }
 
@@ -178,6 +176,7 @@ func (s *MetricServer) MainHandler(w http.ResponseWriter, r *http.Request) {
 
 func respondJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
 	}
