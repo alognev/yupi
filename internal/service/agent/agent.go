@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 	"yupi/internal/domain/metrics"
 	"yupi/internal/repository"
@@ -42,87 +41,90 @@ func NewAgent(serverURL string, pollInterval int64, reportInterval int64) *Agent
 	}
 }
 
-// Запуск сервиса по работе с метриками
 func (a *Agent) Run() {
-	var wg sync.WaitGroup
-	wg.Add(2)
+	pollTicker := time.NewTicker(time.Duration(a.pollInterval) * time.Second)
+	reportTicker := time.NewTicker(time.Duration(a.reportInterval) * time.Second)
+	defer func() {
+		pollTicker.Stop()
+		reportTicker.Stop()
+	}()
 
-	go a.aggregateMetrics(&wg)
-	go a.reportMetrics(&wg)
-
-	wg.Wait()
+	for {
+		select {
+		case <-pollTicker.C:
+			a.aggregateMetrics()
+		case <-reportTicker.C:
+			if err := a.reportMetrics(); err != nil {
+				fmt.Printf("Error reporting metrics: %v\n", err)
+			}
+		}
+	}
 }
 
 // Агрегирование метрик
-func (a *Agent) aggregateMetrics(wg *sync.WaitGroup) {
-	defer wg.Done()
+func (a *Agent) aggregateMetrics() {
 	var stats runtime.MemStats
 
-	for {
-		runtime.ReadMemStats(&stats)
-		metricList := map[string]interface{}{
-			"Alloc":         float64(stats.Alloc),
-			"BuckHashSys":   float64(stats.BuckHashSys),
-			"Frees":         float64(stats.Frees),
-			"GCCPUFraction": stats.GCCPUFraction,
-			"GCSys":         float64(stats.GCSys),
-			"HeapAlloc":     float64(stats.HeapAlloc),
-			"HeapIdle":      float64(stats.HeapIdle),
-			"HeapInuse":     float64(stats.HeapInuse),
-			"HeapObjects":   float64(stats.HeapObjects),
-			"HeapReleased":  float64(stats.HeapReleased),
-			"HeapSys":       float64(stats.HeapSys),
-			"LastGC":        float64(stats.LastGC),
-			"Lookups":       float64(stats.Lookups),
-			"MCacheInuse":   float64(stats.MCacheInuse),
-			"MCacheSys":     float64(stats.MCacheSys),
-			"MSpanInuse":    float64(stats.MSpanInuse),
-			"MSpanSys":      float64(stats.MSpanSys),
-			"Mallocs":       float64(stats.Mallocs),
-			"NextGC":        float64(stats.NextGC),
-			"NumForcedGC":   float64(stats.NumForcedGC),
-			"NumGC":         float64(stats.NumGC),
-			"OtherSys":      float64(stats.OtherSys),
-			"PauseTotalNs":  float64(stats.PauseTotalNs),
-			"StackInuse":    float64(stats.StackInuse),
-			"StackSys":      float64(stats.StackSys),
-			"Sys":           float64(stats.Sys),
-			"TotalAlloc":    float64(stats.TotalAlloc),
-			"RandomValue":   rand.Float64(),
-		}
-
-		for k, v := range metricList {
-			a.storage.UpdateGauge(k, v.(float64))
-		}
-
-		a.storage.UpdateCounter("PollCount", 1)
-		time.Sleep(time.Duration(a.pollInterval) * time.Second)
+	runtime.ReadMemStats(&stats)
+	metricList := map[string]interface{}{
+		"Alloc":         float64(stats.Alloc),
+		"BuckHashSys":   float64(stats.BuckHashSys),
+		"Frees":         float64(stats.Frees),
+		"GCCPUFraction": stats.GCCPUFraction,
+		"GCSys":         float64(stats.GCSys),
+		"HeapAlloc":     float64(stats.HeapAlloc),
+		"HeapIdle":      float64(stats.HeapIdle),
+		"HeapInuse":     float64(stats.HeapInuse),
+		"HeapObjects":   float64(stats.HeapObjects),
+		"HeapReleased":  float64(stats.HeapReleased),
+		"HeapSys":       float64(stats.HeapSys),
+		"LastGC":        float64(stats.LastGC),
+		"Lookups":       float64(stats.Lookups),
+		"MCacheInuse":   float64(stats.MCacheInuse),
+		"MCacheSys":     float64(stats.MCacheSys),
+		"MSpanInuse":    float64(stats.MSpanInuse),
+		"MSpanSys":      float64(stats.MSpanSys),
+		"Mallocs":       float64(stats.Mallocs),
+		"NextGC":        float64(stats.NextGC),
+		"NumForcedGC":   float64(stats.NumForcedGC),
+		"NumGC":         float64(stats.NumGC),
+		"OtherSys":      float64(stats.OtherSys),
+		"PauseTotalNs":  float64(stats.PauseTotalNs),
+		"StackInuse":    float64(stats.StackInuse),
+		"StackSys":      float64(stats.StackSys),
+		"Sys":           float64(stats.Sys),
+		"TotalAlloc":    float64(stats.TotalAlloc),
+		"RandomValue":   rand.Float64(),
 	}
+
+	for k, v := range metricList {
+		a.storage.UpdateGauge(k, v.(float64))
+	}
+
+	a.storage.UpdateCounter("PollCount", 1)
 }
 
 // Отправка всех метрик на сервер
-func (a *Agent) reportMetrics(wg *sync.WaitGroup) error {
-	defer wg.Done()
-	for {
-		// ждем время сбора метрик
-		time.Sleep(time.Duration(a.reportInterval) * time.Second)
-		// Отправляем PollCount
-		count, exists := a.storage.GetCounter(MetricCount)
-		if exists {
-			if err := a.sendMetricJSON(TypeCounter, MetricCount, count); err != nil {
-				log.Println(err)
-				return err
-			}
-		}
+func (a *Agent) reportMetrics() error {
 
-		// Отправляем все gauge метрики
-		for name, value := range a.storage.GetAllGauges() {
-			if err := a.sendMetricJSON(TypeGauge, name, value); err != nil {
-				log.Println(err)
-				return err
-			}
+	// Отправляем PollCount
+	count, exists := a.storage.GetCounter(MetricCount)
+	if exists {
+		if err := a.sendMetricJSON(TypeCounter, MetricCount, count); err != nil {
+			log.Println(err)
+			return err
 		}
 	}
+
+	// Отправляем все gauge метрики
+	for name, value := range a.storage.GetAllGauges() {
+		if err := a.sendMetricJSON(TypeGauge, name, value); err != nil {
+			log.Println(err)
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Отправка метрики на сервер
@@ -159,8 +161,6 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	metric := metrics.Metrics{
 		ID:    metricName,
 		MType: metricType,
-		Value: new(float64),
-		Delta: new(int64),
 	}
 
 	// Заполняем значение в зависимости от типа метрики
@@ -188,8 +188,28 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 		return fmt.Errorf("failed to marshal metric: %w", err)
 	}
 
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest(
+		"POST",
+		"http://localhost:8080/update/",
+		bytes.NewBuffer(jsonData),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 5. Устанавливаем заголовки
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	// 6. Отправляем запрос
+	resp, err := client.Do(req)
+
 	// Отправляем запрос
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	//resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}

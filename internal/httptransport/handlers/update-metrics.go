@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,6 +29,7 @@ func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
 	switch m.MType {
 	case "gauge":
@@ -46,6 +48,13 @@ func (s *MetricServer) JSONUpdateHandler(w http.ResponseWriter, r *http.Request)
 func (s *MetricServer) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	defer r.Body.Close()
+	_, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
@@ -91,6 +100,8 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	defer r.Body.Close()
+
 	// Разбираем URL: /value/<ТИП_МЕТРИКИ>/<ИМЯ_МЕТРИКИ>
 	metricType := chi.URLParam(r, "type")
 	metricName := chi.URLParam(r, "name")
@@ -128,6 +139,8 @@ func (s *MetricServer) ValueHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *MetricServer) JSONValueHandler(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
 	var m metrics.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(w, `{"error":"invalid JSON"}`, http.StatusBadRequest)
@@ -167,6 +180,8 @@ func (s *MetricServer) MainHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	defer r.Body.Close()
 
 	values := s.storage.GetAllGauges()
 
