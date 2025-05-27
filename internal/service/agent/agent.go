@@ -150,7 +150,7 @@ func (a *Agent) sendMetric(metricType, metricName string, value interface{}) err
 
 // Отправка метрики на сервер в формате JSON
 func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{}) error {
-	url := fmt.Sprintf("%s/update/", a.serverURL)
+	url := fmt.Sprintf("%s/%s/", a.serverURL, UpdateURL)
 
 	// Добавляем http://, если URL не начинается с протокола
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
@@ -194,22 +194,21 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 
 	req, err := http.NewRequest(
 		"POST",
-		"http://localhost:8080/update/",
+		url,
 		bytes.NewBuffer(jsonData),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// 5. Устанавливаем заголовки
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	// 6. Отправляем запрос
 	resp, err := client.Do(req)
 
 	// Отправляем запрос
 	//resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)
 	}
