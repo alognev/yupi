@@ -46,7 +46,7 @@ func TestAgent_SendMetric(t *testing.T) {
 	}))
 	defer server.Close()
 
-	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval)
+	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval, config.DefaultUseGzip)
 
 	tests := []struct {
 		name       string
@@ -90,7 +90,7 @@ func TestAgent_ReportMetrics(t *testing.T) {
 	}))
 	defer server.Close()
 
-	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval)
+	agent := NewAgent(server.URL, config.DefaultPollInterval, config.DefaultReportInterval, config.DefaultUseGzip)
 
 	// Добавляем тестовые метрики
 	agent.storage.UpdateGauge("test_gauge1", 1.0)
