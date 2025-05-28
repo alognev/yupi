@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
@@ -184,9 +185,25 @@ func (s *MetricServer) MainHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	values := s.storage.GetAllGauges()
+	// Устанавливаем Content-Type до сжатия
+	w.Header().Set("Content-Type", "text/html")
+
+	// Проверяем, поддерживает ли клиент gzip
+	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+		w.Header().Set("Content-Encoding", "gzip")
+	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, values)
+
+	buf := &bytes.Buffer{}
+	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(true)
+	if err := enc.Encode(values); err != nil {
+		http.Error(w, `{"error":"internal server error"}`, http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(buf.Bytes()) //nolint:errcheck
 }
 
 func respondJSON(w http.ResponseWriter, data interface{}) {
