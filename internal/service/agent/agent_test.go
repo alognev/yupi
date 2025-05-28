@@ -11,8 +11,9 @@ func TestNewAgent(t *testing.T) {
 	serverURL := config.DefaultServerAddr
 	pollInterval := config.DefaultPollInterval
 	reportInterval := config.DefaultReportInterval
+	useGzip := config.DefaultUseGzip
 
-	agent := NewAgent(serverURL, pollInterval, reportInterval)
+	agent := NewAgent(serverURL, pollInterval, reportInterval, useGzip)
 
 	if agent == nil {
 		t.Error("Не удалось инициировать агента")
