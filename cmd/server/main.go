@@ -10,6 +10,7 @@ import (
 	"strings"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
+	"yupi/internal/httptransport/middlewares"
 	"yupi/internal/logger"
 	"yupi/internal/repository"
 )
@@ -20,7 +21,7 @@ type Config struct {
 
 func main() {
 	if err := logger.Initialize("info"); err != nil {
-		log.Fatal("Не удалось инициировать логер")
+		log.Fatal("Не удалось инициировать логгер")
 	}
 	// Инициализация конфига
 	cfg := setConfig()
@@ -32,7 +33,7 @@ func main() {
 
 	// Инициализация роутера
 	r := chi.NewRouter()
-	r.Use(logger.LoggingRequestMiddleware)
+	r.Use(logger.LoggingRequestMiddleware, middlewares.GzipMiddleware)
 
 	// Настройка маршрутов
 
@@ -51,7 +52,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }
 
-// выставляет значения конфигу из аргументов командной строки
+// Выставляет значения конфиг из аргументов командной строки
 func setConfig() Config {
 	var cfg Config
 

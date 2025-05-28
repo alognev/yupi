@@ -2,8 +2,10 @@ package agent
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -27,10 +29,11 @@ type Agent struct {
 	pollInterval   int64
 	reportInterval int64
 	storage        *repository.MemStorage
+	useGzip        bool
 }
 
 // Конструктор
-func NewAgent(serverURL string, pollInterval int64, reportInterval int64) *Agent {
+func NewAgent(serverURL string, pollInterval int64, reportInterval int64, useGzip bool) *Agent {
 
 	return &Agent{
 		protocol:       "http",
@@ -38,6 +41,7 @@ func NewAgent(serverURL string, pollInterval int64, reportInterval int64) *Agent
 		pollInterval:   pollInterval,
 		reportInterval: reportInterval,
 		storage:        repository.NewMemStorage(),
+		useGzip:        useGzip,
 	}
 }
 
@@ -188,6 +192,20 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 		return fmt.Errorf("failed to marshal metric: %w", err)
 	}
 
+	// Подготавливаем тело запроса (сжатое или обычное)
+	var body bytes.Buffer
+	if a.useGzip {
+		gz := gzip.NewWriter(&body)
+		if _, err := gz.Write(jsonData); err != nil {
+			return fmt.Errorf("failed to compress data: %w", err)
+		}
+		if err := gz.Close(); err != nil {
+			return fmt.Errorf("failed to close gzip writer: %w", err)
+		}
+	} else {
+		body.Write(jsonData)
+	}
+
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -195,14 +213,20 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	req, err := http.NewRequest(
 		"POST",
 		url,
-		bytes.NewBuffer(jsonData),
+		&body,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// Устанавливаем заголовки
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	if a.useGzip {
+		req.Header.Set("Content-Encoding", "gzip")
+	}
 
 	resp, err := client.Do(req)
 
@@ -214,8 +238,30 @@ func (a *Agent) sendMetricJSON(metricType, metricName string, value interface{})
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("server returned status: %d", resp.StatusCode)
+	// Обрабатываем возможный сжатый ответ
+	var reader io.Reader
+	switch resp.Header.Get("Content-Encoding") {
+	case "gzip":
+		gzReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzReader.Close()
+		reader = gzReader
+	default:
+		reader = resp.Body
 	}
+
+	// Читаем ответ сервера (для логирования или проверки)
+	responseBody, err := io.ReadAll(reader)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("server returned status: %d, body: %s",
+			resp.StatusCode, string(responseBody))
+	}
+
 	return nil
 }

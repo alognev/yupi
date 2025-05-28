@@ -16,6 +16,7 @@ type Config struct {
 	ServerAddr     string `env:"ADDRESS"`
 	PollInterval   int64  `env:"POLL_INTERVAL"`
 	ReportInterval int64  `env:"REPORT_INTERVAL"`
+	UseGzip        bool   `env:"USE_GZIP" envDefault:"true"`
 }
 
 // выставляет значения конфигу из аргументов командной строки
