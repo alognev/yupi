@@ -4,11 +4,14 @@ import (
 	"flag"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
 	"strings"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
+	"yupi/internal/httptransport/middlewares"
+	"yupi/internal/logger"
 	"yupi/internal/repository"
 )
 
@@ -17,6 +20,9 @@ type Config struct {
 }
 
 func main() {
+	if err := logger.Initialize("info"); err != nil {
+		log.Fatal("Не удалось инициировать логгер")
+	}
 	// Инициализация конфига
 	cfg := setConfig()
 	// Инициализация хранилища
@@ -27,8 +33,16 @@ func main() {
 
 	// Инициализация роутера
 	r := chi.NewRouter()
+	r.Use(logger.LoggingRequestMiddleware, middlewares.GzipMiddleware)
 
 	// Настройка маршрутов
+
+	r.With(middleware.AllowContentType("application/json")).
+		Post("/update/", metricServer.JSONUpdateHandler)
+
+	r.With(middleware.AllowContentType("application/json")).
+		Post("/value/", metricServer.JSONValueHandler)
+
 	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
 	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
 	r.Get("/", metricServer.MainHandler)
@@ -38,7 +52,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }
 
-// выставляет значения конфигу из аргументов командной строки
+// Выставляет значения конфиг из аргументов командной строки
 func setConfig() Config {
 	var cfg Config
 
