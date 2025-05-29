@@ -38,7 +38,7 @@ func (fs *FileStorage) SaveToFile(config config.ServerConfig) error {
 
 	// Создаем директорию если нужно
 	if err := os.MkdirAll(filepath.Dir(config.FileStoragePath), 0755); err != nil {
-		return fmt.Errorf("Не удалось создать директорию: %w", err)
+		return fmt.Errorf("не удалось создать директорию: %w", err)
 	}
 
 	return os.WriteFile(config.FileStoragePath, fileData, 0644)
