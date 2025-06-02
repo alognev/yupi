@@ -17,6 +17,7 @@ func main() {
 		cfg.ServerAddr,
 		cfg.PollInterval,
 		cfg.ReportInterval,
+		cfg.UseGzip,
 	)
 	myAgent.Run()
 }

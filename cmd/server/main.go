@@ -1,58 +1,75 @@
 package main
 
 import (
-	"flag"
-	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
-	"strings"
+	"os"
+	"os/signal"
+	"syscall"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
+	"yupi/internal/httptransport/middlewares"
 	"yupi/internal/repository"
+	"yupi/internal/service/server"
 )
 
-type Config struct {
-	ServerAddr string `env:"ADDRESS"`
-}
-
 func main() {
+	if err := middlewares.Initialize("info"); err != nil {
+		log.Fatal("Не удалось инициировать логгер")
+	}
 	// Инициализация конфига
-	cfg := setConfig()
+	cfg := config.SetServerConfig()
 	// Инициализация хранилища
 	storage := repository.NewMemStorage()
+	fileStorage := repository.NewFileStorage(storage)
 
-	// Инициализация сервера метрик
-	metricServer := handlers.NewMetricServer(storage)
+	// Инициализация сервера метрик, отдельно разбит на хендлер с хранилищем метрик и отдельно на сохранялку в файл
+	metricHandler := handlers.NewMetricServer(storage)
+	metricFileServer := server.NewMetricsSaver(*fileStorage, &cfg)
+	err := metricFileServer.Run()
+
+	if err != nil {
+		log.Fatal("Не удалось запустить обработчик файлов")
+	}
 
 	// Инициализация роутера
 	r := chi.NewRouter()
+	r.Use(middlewares.LoggingRequestMiddleware, middlewares.GzipMiddleware)
 
 	// Настройка маршрутов
-	r.Post("/update/{type}/{name}/{value}", metricServer.UpdateHandler)
-	r.Get("/value/{type}/{name}", metricServer.ValueHandler)
-	r.Get("/", metricServer.MainHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AllowContentType("application/json"))
+		r.Post("/update/", metricHandler.JSONUpdateHandler)
+		r.Post("/value/", metricHandler.JSONValueHandler)
+	})
+
+	r.Post("/update/{type}/{name}/{value}", metricHandler.UpdateHandler)
+	r.Get("/value/{type}/{name}", metricHandler.ValueHandler)
+	r.Get("/", metricHandler.MainHandler)
+
+	// Обработка сигналов для graceful shutdown
+	setupGracefulShutdown(metricFileServer)
 
 	// Запуск сервера
-	log.Println("Starting server on " + cfg.ServerAddr)
+	middlewares.Log.Info("Сервер запущен " + cfg.ServerAddr)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }
 
-// выставляет значения конфигу из аргументов командной строки
-func setConfig() Config {
-	var cfg Config
+func setupGracefulShutdown(server *server.MetricsSaver) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	err := env.Parse(&cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		<-sigChan
+		middlewares.Log.Info("Остановка сервера...")
 
-	a := flag.String("a", config.DefaultServerAddr, "Адрес сервера")
-	flag.Parse()
+		// Сохраняем метрики при завершении
+		if err := server.Stop(); err != nil {
+			middlewares.Log.Error("Не удалось успешно сохранить метрики при остановке сервера: " + err.Error())
+		}
 
-	if strings.TrimSpace(cfg.ServerAddr) == "" {
-		cfg.ServerAddr = *a
-	}
-
-	return cfg
+		os.Exit(0)
+	}()
 }
