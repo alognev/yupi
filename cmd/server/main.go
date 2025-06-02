@@ -8,13 +8,12 @@ import (
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
 	"yupi/internal/httptransport/middlewares"
-	"yupi/internal/logger"
 	"yupi/internal/repository"
 	"yupi/internal/service/server"
 )
 
 func main() {
-	if err := logger.Initialize("info"); err != nil {
+	if err := middlewares.Initialize("info"); err != nil {
 		log.Fatal("Не удалось инициировать логгер")
 	}
 	// Инициализация конфига
@@ -34,15 +33,14 @@ func main() {
 
 	// Инициализация роутера
 	r := chi.NewRouter()
-	r.Use(logger.LoggingRequestMiddleware, middlewares.GzipMiddleware)
+	r.Use(middlewares.LoggingRequestMiddleware, middlewares.GzipMiddleware)
 
 	// Настройка маршрутов
-
-	r.With(middleware.AllowContentType("application/json")).
-		Post("/update/", metricHandler.JSONUpdateHandler)
-
-	r.With(middleware.AllowContentType("application/json")).
-		Post("/value/", metricHandler.JSONValueHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.AllowContentType("application/json"))
+		r.Post("/update/", metricHandler.JSONUpdateHandler)
+		r.Post("/value/", metricHandler.JSONValueHandler)
+	})
 
 	r.Post("/update/{type}/{name}/{value}", metricHandler.UpdateHandler)
 	r.Get("/value/{type}/{name}", metricHandler.ValueHandler)
