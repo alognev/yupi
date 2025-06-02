@@ -3,21 +3,18 @@ package server
 import (
 	"time"
 	"yupi/internal/config"
-	"yupi/internal/httptransport/handlers"
 	"yupi/internal/httptransport/middlewares"
 	"yupi/internal/repository"
 )
 
 type MetricsSaver struct {
-	handler  handlers.MetricServer
 	storage  repository.FileStorage
 	config   *config.ServerConfig
 	stopChan chan struct{}
 }
 
-func NewMetricsSaver(handler handlers.MetricServer, storage repository.FileStorage, config *config.ServerConfig) *MetricsSaver {
+func NewMetricsSaver(storage repository.FileStorage, config *config.ServerConfig) *MetricsSaver {
 	return &MetricsSaver{
-		handler:  handler,
 		storage:  storage,
 		config:   config,
 		stopChan: make(chan struct{}),

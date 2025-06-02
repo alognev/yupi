@@ -27,7 +27,7 @@ func main() {
 
 	// Инициализация сервера метрик, отдельно разбит на хендлер с хранилищем метрик и отдельно на сохранялку в файл
 	metricHandler := handlers.NewMetricServer(storage)
-	metricFileServer := server.NewMetricsSaver(*metricHandler, *fileStorage, &cfg)
+	metricFileServer := server.NewMetricsSaver(*fileStorage, &cfg)
 	err := metricFileServer.Run()
 
 	if err != nil {
