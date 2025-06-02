@@ -8,6 +8,12 @@ import (
 	"yupi/internal/config"
 )
 
+// StorageData структура для сериализации данных
+type StorageData struct {
+	Gauges   map[string]float64 `json:"gauges"`
+	Counters map[string]int64   `json:"counters"`
+}
+
 type FileStorage struct {
 	memStorage *MemStorage
 }

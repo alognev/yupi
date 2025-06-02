@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"encoding/json"
-	"os"
 	"sync"
 	"yupi/internal/domain/metrics"
 )
@@ -77,63 +75,4 @@ func (s *MemStorage) GetCounter(name string) (int64, bool) {
 	defer s.mu.RUnlock()
 	val, ok := s.counters[name]
 	return val, ok
-}
-
-// StorageData структура для сериализации данных
-type StorageData struct {
-	Gauges   map[string]float64 `json:"gauges"`
-	Counters map[string]int64   `json:"counters"`
-}
-
-// SaveToFile сохраняет текущее состояние метрик в файл
-func (s *MemStorage) SaveToFile(filepath string) error {
-	s.mu.RLock()
-	data := StorageData{
-		Gauges:   make(map[string]float64),
-		Counters: make(map[string]int64),
-	}
-
-	// Копируем данные
-	for k, v := range s.gauges {
-		data.Gauges[k] = v
-	}
-	for k, v := range s.counters {
-		data.Counters[k] = v
-	}
-	s.mu.RUnlock()
-
-	// Сериализуем данные
-	fileData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	// Записываем в файл
-	return os.WriteFile(filepath, fileData, 0644)
-}
-
-// LoadFromFile загружает состояние метрик из файла
-func (s *MemStorage) LoadFromFile(filepath string) error {
-	fileData, err := os.ReadFile(filepath)
-	if err != nil {
-		return err
-	}
-
-	var data StorageData
-	if err := json.Unmarshal(fileData, &data); err != nil {
-		return err
-	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	// Загружаем данные
-	for k, v := range data.Gauges {
-		s.gauges[k] = v
-	}
-	for k, v := range data.Counters {
-		s.counters[k] = v
-	}
-
-	return nil
 }
