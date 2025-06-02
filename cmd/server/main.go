@@ -47,6 +47,6 @@ func main() {
 	r.Get("/", metricHandler.MainHandler)
 
 	// Запуск сервера
-	log.Println("Starting server on " + cfg.ServerAddr)
+	middlewares.Log.Info("Starting server on " + cfg.ServerAddr)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }

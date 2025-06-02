@@ -3,11 +3,11 @@ package config
 import (
 	"flag"
 	"github.com/caarlos0/env/v11"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+	"yupi/internal/httptransport/middlewares"
 )
 
 const (
@@ -30,7 +30,7 @@ func SetServerConfig() ServerConfig {
 
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Fatal(err)
+		middlewares.Log.Fatal(err.Error())
 	}
 
 	a := flag.String("a", DefaultServerAddr, "Адрес сервера")

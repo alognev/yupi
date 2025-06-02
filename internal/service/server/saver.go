@@ -1,10 +1,10 @@
 package server
 
 import (
-	"log"
 	"time"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
+	"yupi/internal/httptransport/middlewares"
 	"yupi/internal/repository"
 )
 
@@ -28,7 +28,7 @@ func (s *MetricsSaver) Run() error {
 	// Загружаем метрики при старте, если включено
 	if s.config.Restore {
 		if err := s.storage.LoadFromFile(*s.config); err != nil {
-			log.Printf("Ошибка загрузки метрик: %v", err)
+			middlewares.Log.Error("Ошибка загрузки метрик: " + err.Error())
 		}
 	}
 
@@ -42,7 +42,7 @@ func (s *MetricsSaver) Stop() {
 	close(s.stopChan)
 	// Сохраняем метрики при остановке
 	if err := s.storage.SaveToFile(*s.config); err != nil {
-		log.Printf("Ошибка сохранения метрик при остановке: %v", err)
+		middlewares.Log.Error("Ошибка сохранения метрик при остановке: " + err.Error())
 	}
 }
 
@@ -59,7 +59,7 @@ func (s *MetricsSaver) startMetricsSaver() {
 		select {
 		case <-ticker.C:
 			if err := s.storage.SaveToFile(*s.config); err != nil {
-				log.Printf("Ошибка сохранения метрик: %v", err)
+				middlewares.Log.Error("Ошибка сохранения метрик: " + err.Error())
 			}
 		case <-s.stopChan:
 			return
