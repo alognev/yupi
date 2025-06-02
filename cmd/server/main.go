@@ -53,7 +53,7 @@ func main() {
 	setupGracefulShutdown(metricFileServer)
 
 	// Запуск сервера
-	middlewares.Log.Info("SСервер запущен " + cfg.ServerAddr)
+	middlewares.Log.Info("Сервер запущен " + cfg.ServerAddr)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
 }
 
@@ -63,7 +63,7 @@ func setupGracefulShutdown(server *server.MetricsSaver) {
 
 	go func() {
 		<-sigChan
-		middlewares.Log.Info("Оставновка сервера...")
+		middlewares.Log.Info("Остановка сервера...")
 
 		// Сохраняем метрики при завершении
 		if err := server.Stop(); err != nil {
