@@ -38,12 +38,14 @@ func (s *MetricsSaver) Run() error {
 	return nil
 }
 
-func (s *MetricsSaver) Stop() {
+func (s *MetricsSaver) Stop() error {
 	close(s.stopChan)
 	// Сохраняем метрики при остановке
-	if err := s.storage.SaveToFile(*s.config); err != nil {
+	err := s.storage.SaveToFile(*s.config)
+	if err != nil {
 		middlewares.Log.Error("Ошибка сохранения метрик при остановке: " + err.Error())
 	}
+	return nil
 }
 
 func (s *MetricsSaver) startMetricsSaver() {

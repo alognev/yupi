@@ -5,6 +5,9 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"yupi/internal/config"
 	"yupi/internal/httptransport/handlers"
 	"yupi/internal/httptransport/middlewares"
@@ -46,7 +49,27 @@ func main() {
 	r.Get("/value/{type}/{name}", metricHandler.ValueHandler)
 	r.Get("/", metricHandler.MainHandler)
 
+	// Обработка сигналов для graceful shutdown
+	setupGracefulShutdown(metricFileServer)
+
 	// Запуск сервера
-	middlewares.Log.Info("Starting server on " + cfg.ServerAddr)
+	middlewares.Log.Info("SСервер запущен " + cfg.ServerAddr)
 	log.Fatal(http.ListenAndServe(cfg.ServerAddr, r))
+}
+
+func setupGracefulShutdown(server *server.MetricsSaver) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-sigChan
+		middlewares.Log.Info("Оставновка сервера...")
+
+		// Сохраняем метрики при завершении
+		if err := server.Stop(); err != nil {
+			middlewares.Log.Error("Не удалось успешно сохранить метрики при остановке сервера: " + err.Error())
+		}
+
+		os.Exit(0)
+	}()
 }
