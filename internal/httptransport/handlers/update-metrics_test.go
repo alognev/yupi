@@ -89,10 +89,6 @@ func TestMetricServer_UpdateHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, req)
 
-			//w := httptest.NewRecorder()
-
-			//server.UpdateHandler(w, req)
-
 			if w.Code != tt.wantStatus {
 				t.Errorf("UpdateHandler() status = %v, want %v", w.Code, tt.wantStatus)
 			}
