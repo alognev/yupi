@@ -21,7 +21,8 @@ type ServerConfig struct {
 	StoreInterval   time.Duration
 	FileStoragePath string
 	Restore         bool
-	UseGzip         bool `env:"USE_GZIP" envDefault:"true"`
+	UseGzip         bool   `env:"USE_GZIP" envDefault:"true"`
+	DnsDB           string `env:"DATABASE_DSN"`
 }
 
 // Выставляет значения конфиг из аргументов командной строки
@@ -34,18 +35,21 @@ func SetServerConfig() ServerConfig {
 	}
 
 	a := flag.String("a", DefaultServerAddr, "Адрес сервера")
-	flag.Parse()
-
-	if strings.TrimSpace(cfg.ServerAddr) == "" {
-		cfg.ServerAddr = *a
-	}
+	dsnDB := flag.String("d", "", "PostgreSQL DSN")
 
 	var storeIntervalSeconds int
 	flag.IntVar(&storeIntervalSeconds, "i", int(DefaultStoreInterval.Seconds()), "store interval in seconds")
 	flag.StringVar(&cfg.FileStoragePath, "f", DefaultFileStoragePath, "file storage path")
 	flag.BoolVar(&cfg.Restore, "r", DefaultRestore, "restore metrics from file")
-
 	flag.Parse()
+
+	if strings.TrimSpace(cfg.DnsDB) == "" {
+		cfg.DnsDB = *dsnDB
+	}
+
+	if strings.TrimSpace(cfg.ServerAddr) == "" {
+		cfg.ServerAddr = *a
+	}
 
 	// Переопределяем, фиксим кейс выше, когда в енвах может быть пустая строка, разрешаем такие значения
 	if envInterval := os.Getenv("STORE_INTERVAL"); envInterval != "" {
